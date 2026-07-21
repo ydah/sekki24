@@ -18,6 +18,10 @@ module Sekki24
       class << self
         def new_moons(year, tz:)
           calendar_year = validate_year(year)
+          new_moons_for_calendar(calendar_year, tz: tz)
+        end
+
+        def new_moons_for_calendar(calendar_year, tz:)
           cache_key = [calendar_year, TimeScale.timezone_key(tz)].freeze
           cached = @cache_mutex.synchronize { @year_cache[cache_key] }
           return cached if cached
