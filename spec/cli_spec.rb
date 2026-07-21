@@ -6,7 +6,12 @@ require "rbconfig"
 
 RSpec.describe "sekki24 executable" do
   def run_cli(*arguments)
+    unbundled_environment = ENV.each_key
+      .grep(/\A(?:BUNDLE|BUNDLER|RUBYOPT|RUBYLIB)/)
+      .to_h { |key| [key, nil] }
+
     Open3.capture3(
+      unbundled_environment,
       RbConfig.ruby,
       "-I#{File.expand_path("../lib", __dir__)}",
       File.expand_path("../exe/sekki24", __dir__),
