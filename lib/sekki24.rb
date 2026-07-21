@@ -73,6 +73,7 @@ module Sekki24
       end
       SeventyTwoKou.clear_cache! if defined?(SeventyTwoKou)
       ZassetsuCalendar.clear_cache! if defined?(ZassetsuCalendar)
+      Lunar::PhaseFinder.clear_cache! if defined?(Lunar::PhaseFinder)
       nil
     end
 
@@ -140,3 +141,4 @@ end
 
 require_relative "sekki24/seventy_two_kou"
 require_relative "sekki24/zassetsu_calendar"
+require_relative "sekki24/lunar/phase_finder"
