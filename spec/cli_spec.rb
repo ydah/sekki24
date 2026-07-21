@@ -43,6 +43,25 @@ RSpec.describe "sekki24 executable" do
     )
   end
 
+  it "exports every extended calendar from the command line" do
+    expected_counts = {
+      "kou" => 72,
+      "zassetsu" => 14,
+      "new-moons" => 12,
+      "lunisolar" => 12
+    }
+
+    expected_counts.each do |calendar, count|
+      stdout, stderr, status = run_cli(
+        "2026", "--tz", "+09:00", "--calendar", calendar, "--format", "json"
+      )
+
+      expect(status).to be_success
+      expect(stderr).to be_empty
+      expect(JSON.parse(stdout).length).to eq(count)
+    end
+  end
+
   it "reports invalid input without a backtrace" do
     _stdout, stderr, status = run_cli("2200")
 

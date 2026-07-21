@@ -9,13 +9,14 @@ require "sekki24"
 options = {
   timezone: Sekki24::DEFAULT_TIMEZONE,
   precision: Sekki24::DEFAULT_PRECISION,
-  format: "text"
+  format: "text",
+  calendar: "terms"
 }
 
 parser = OptionParser.new do |command|
   command.banner = "Usage: sekki24 [YEAR] [options]"
   command.separator ""
-  command.separator "Calculate the 24 solar terms for a calendar year."
+  command.separator "Calculate a Japanese seasonal or lunisolar calendar for a year."
   command.separator ""
   command.on("--tz OFFSET", 'UTC offset such as "+09:00" (default: +00:00)') do |value|
     options[:timezone] = value
@@ -25,6 +26,13 @@ parser = OptionParser.new do |command|
   end
   command.on("--format FORMAT", %w[text json], "text or json (default: text)") do |value|
     options[:format] = value
+  end
+  command.on(
+    "--calendar TYPE",
+    %w[terms kou zassetsu new-moons lunisolar],
+    "terms, kou, zassetsu, new-moons, or lunisolar"
+  ) do |value|
+    options[:calendar] = value
   end
   command.on("-v", "--version", "Print the version") do
     puts Sekki24::VERSION
@@ -41,22 +49,52 @@ begin
   raise OptionParser::InvalidArgument, "too many arguments" if ARGV.length > 1
 
   year = ARGV.empty? ? Date.today.year : Integer(ARGV.first, 10)
-  terms = Sekki24.year(year, tz: options[:timezone], precision: options[:precision])
+  records = case options[:calendar]
+            when "terms"
+              Sekki24.year(year, tz: options[:timezone], precision: options[:precision])
+            when "kou"
+              Sekki24.kou_year(year, tz: options[:timezone], precision: options[:precision])
+            when "zassetsu"
+              Sekki24.zassetsu_year(year, tz: options[:timezone], precision: options[:precision])
+            when "new-moons"
+              Sekki24.new_moons(year, tz: options[:timezone])
+            when "lunisolar"
+              Sekki24.lunisolar_year(year, tz: options[:timezone])
+            end
+
+  serialize = nil
+  serialize = lambda do |value|
+    case value
+    when Time then value.iso8601
+    when Date then value.iso8601
+    when Array then value.map { |entry| serialize.call(entry) }
+    when Hash then value.transform_values { |entry| serialize.call(entry) }
+    else value
+    end
+  end
+  hashes = records.map do |record|
+    hash = record.respond_to?(:to_h) ? record.to_h : { phase: :new_moon, time: record, date: record.to_date }
+    hash = hash.merge(date: record.to_date) if record.respond_to?(:to_date) && !hash.key?(:date)
+    serialize.call(hash)
+  end
 
   if options[:format] == "json"
-    records = terms.map do |term|
-      term.to_h.merge(time: term.time.iso8601, date: term.to_date.iso8601)
-    end
-    puts JSON.pretty_generate(records)
+    puts JSON.pretty_generate(hashes)
   else
-    terms.each do |term|
-      puts format(
-        "%s  %s (%s)  %3d°",
-        term.time.iso8601,
-        term.name_ja,
-        term.key,
-        term.longitude
-      )
+    records.each do |record|
+      case options[:calendar]
+      when "terms"
+        puts format("%s  %s (%s)  %3d°", record.time.iso8601, record.name_ja, record.key, record.longitude)
+      when "kou"
+        puts format("%s  第%02d候 %s  %3d°", record.time.iso8601, record.ordinal, record.name_ja, record.longitude)
+      when "zassetsu"
+        period = record.date == record.end_date ? record.date.iso8601 : "#{record.date.iso8601}..#{record.end_date.iso8601}"
+        puts format("%-21s  %s (%s)", period, record.name_ja, record.key)
+      when "new-moons"
+        puts record.iso8601
+      when "lunisolar"
+        puts format("%d年%-4s  %s..%s  %d日", record.year, record.name_ja, record.start_date, record.end_date, record.length)
+      end
     end
   end
 rescue OptionParser::ParseError, ArgumentError, RangeError => error

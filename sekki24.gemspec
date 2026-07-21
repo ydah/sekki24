@@ -8,11 +8,11 @@ Gem::Specification.new do |spec|
   spec.authors = ["Yudai Takada"]
   spec.email = ["t.yudai92@gmail.com"]
 
-  spec.summary = "Calculate the exact times of the 24 East Asian solar terms"
+  spec.summary = "Calculate Japanese solar terms, observances, and lunisolar dates"
   spec.description = <<~DESCRIPTION
-    Sekki24 calculates the instants of the 24 solar terms for years 1900 through
-    2100 using pure Ruby astronomical algorithms, with explicit timezone and
-    precision handling and no runtime dependencies.
+    Sekki24 calculates the 24 solar terms, 72 microseasons, supplementary
+    seasonal observances, new moons, and Japanese lunisolar dates for years
+    1900 through 2100 using pure Ruby and no runtime dependencies.
   DESCRIPTION
   spec.homepage = "https://rubygems.org/gems/sekki24"
   spec.license = "MIT"

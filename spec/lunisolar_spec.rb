@@ -45,7 +45,7 @@ RSpec.describe "Japanese lunisolar calendar" do
   end
 
   it "round trips Gregorian and lunisolar dates" do
-    dates = [Date.new(1900, 1, 31), Date.new(2000, 2, 29), Date.new(2026, 7, 7), Date.new(2100, 12, 1)]
+    dates = [Date.new(1900, 1, 1), Date.new(2000, 2, 29), Date.new(2026, 7, 7), Date.new(2100, 12, 31)]
 
     dates.each do |gregorian_date|
       lunar = Sekki24.lunisolar(gregorian_date, tz: LUNISOLAR_JST)

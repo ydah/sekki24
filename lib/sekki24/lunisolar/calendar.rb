@@ -8,6 +8,8 @@ module Sekki24
   module Lunisolar
     module Calendar
       LEAP_MONTH_RULE = :winter_solstice_priority
+      MIN_LUNISOLAR_YEAR = MIN_YEAR - 1
+      MAX_LUNISOLAR_YEAR = MAX_YEAR
       @cache_mutex = Mutex.new
       @range_cache = {}
       @year_cache = {}
@@ -59,7 +61,9 @@ module Sekki24
             raise ArgumentError, "lunar day must be between 1 and #{target.length}"
           end
 
-          target.start_date + day_number - 1
+          result = target.start_date + day_number - 1
+          validate_gregorian_year(result.year)
+          result
         rescue TypeError
           raise ArgumentError, "lunar month and day must be Integers"
         end
@@ -99,9 +103,9 @@ module Sekki24
 
         def validate_lunar_year(year)
           value = Integer(year)
-          return value if (MIN_YEAR..MAX_YEAR).cover?(value)
+          return value if (MIN_LUNISOLAR_YEAR..MAX_LUNISOLAR_YEAR).cover?(value)
 
-          raise RangeError, "lunisolar year must be between #{MIN_YEAR} and #{MAX_YEAR}"
+          raise RangeError, "lunisolar year must be between #{MIN_LUNISOLAR_YEAR} and #{MAX_LUNISOLAR_YEAR}"
         rescue ArgumentError, TypeError
           raise ArgumentError, "lunisolar year must be an Integer"
         end
