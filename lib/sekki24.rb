@@ -71,6 +71,7 @@ module Sekki24
         @year_cache.clear
         @candidate_cache.clear
       end
+      SeventyTwoKou.clear_cache! if defined?(SeventyTwoKou)
       nil
     end
 
@@ -135,3 +136,5 @@ module Sekki24
     end
   end
 end
+
+require_relative "sekki24/seventy_two_kou"

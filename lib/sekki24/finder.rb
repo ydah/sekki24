@@ -15,11 +15,20 @@ module Sekki24
 
     def find(year:, longitude:, solar:)
       start = TimeScale.utc_to_jde(Time.utc(Integer(year), 1, 1))
-      start_longitude = solar.longitude(start)
-      estimate = start + (positive_difference(longitude, start_longitude) / MEAN_SOLAR_MOTION)
+      find_from(start, longitude, solar)
+    end
+
+    def find_after(time:, longitude:, solar:)
+      start = TimeScale.utc_to_jde(time)
+      find_from(start, longitude, solar)
+    end
+
+    def find_from(start, longitude, solar)
+      estimate = start + (positive_difference(longitude, solar.longitude(start)) / MEAN_SOLAR_MOTION)
       root = newton(estimate, longitude, solar)
       TimeScale.jde_to_utc(root)
     end
+    private_class_method :find_from
 
     def newton(estimate, target, solar)
       jde = estimate
