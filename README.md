@@ -2,46 +2,35 @@
 
 [![CI](https://github.com/ydah/sekki24/actions/workflows/main.yml/badge.svg)](https://github.com/ydah/sekki24/actions/workflows/main.yml)
 
-Japanese seasonal and lunisolar calendar calculations in Ruby. Sekki24 covers
-the 24 solar terms (二十四節気), 72 microseasons (七十二候), supplementary
-observances (雑節), new moons, and Japanese lunisolar dates (旧暦) for
-1900–2100.
+Japanese seasonal and lunisolar calendar calculations in Ruby for 1900–2100.
 
-Calculations run locally from astronomical algorithms and embedded
-coefficients. No downloaded ephemerides or precomputed calendar tables are
-required.
-
-## Features
-
-- Exact instants for the 24 solar terms, with Japanese, reading, English, and
-  Chinese names
-- The complete traditional Japanese sequence of 72 microseasons
-- Four doyo periods, Setsubun, Higan, Shanichi, and other supplementary
-  observances
-- New-moon calculation and Gregorian/lunisolar date conversion
-- Explicit timezone handling and precise or fast solar calculation modes
-- Immutable calendar value objects and JSON-ready hashes
+- 24 solar terms (二十四節気)
+- 72 microseasons (七十二候)
+- Supplementary observances (雑節)
+- New moons and Japanese lunisolar dates (旧暦)
 
 ## Installation
 
-Requires Ruby 3.0 or later.
+Sekki24 requires Ruby 3.0 or later.
 
 ```bash
 gem install sekki24
 ```
 
-With Bundler:
+Or add it to a bundle:
 
 ```bash
 bundle add sekki24
 ```
 
-## Quick start
+## Usage
+
+### Solar terms
 
 ```ruby
 require "sekki24"
 
-# Results are UTC unless a timezone is supplied.
+# UTC is used unless tz: is supplied.
 terms = Sekki24.year(2026, tz: "+09:00")
 terms.length # => 24
 
@@ -49,6 +38,7 @@ risshun = Sekki24.term(2026, :risshun, tz: "+09:00")
 risshun.name_ja   # => "立春"
 risshun.reading   # => "りっしゅん"
 risshun.name_en   # => "Start of spring"
+risshun.name_zh   # => "立春"
 risshun.longitude # => 315
 risshun.time      # => 2026-02-04 05:02... +0900
 risshun.to_date   # => #<Date: 2026-02-04 ...>
@@ -59,22 +49,7 @@ Sekki24.prev_term(Time.now, tz: "+09:00")
 Sekki24.on(Date.new(2026, 2, 4), tz: "+09:00") # => 立春
 ```
 
-## API overview
-
-| Calendar | Main APIs |
-| --- | --- |
-| 24 solar terms | `year`, `term`, `current`, `next_term`, `prev_term`, `on` |
-| 72 microseasons | `kou_year`, `kou`, `current_kou`, `next_kou`, `prev_kou` |
-| Supplementary observances | `zassetsu_year`, `zassetsu`, `zassetsu_on`, `current_zassetsu` |
-| New moons | `new_moons`, `new_moon_before`, `new_moon_after`, `moon_longitude` |
-| Lunisolar calendar | `lunisolar`, `lunisolar_year`, `gregorian` |
-
-All methods are available directly on `Sekki24`. `Term`, `Kou`, `Zassetsu`,
-`Lunisolar::Date`, and `Lunisolar::Month` are immutable and expose `#to_h`.
-Solar terms, microseasons, and supplementary observances also implement
-`Comparable`.
-
-### Seasonal calendars
+### Microseasons and observances
 
 ```ruby
 microseasons = Sekki24.kou_year(2026, tz: "+09:00")
@@ -85,17 +60,17 @@ first.name_ja # => "東風解凍"
 first.reading # => "はるかぜこおりをとく"
 
 observances = Sekki24.zassetsu_year(2026, tz: "+09:00")
+observances.length # => 14
 Sekki24.zassetsu(2026, :summer_doyo, tz: "+09:00")
 Sekki24.zassetsu_on(Date.new(2026, 2, 3), tz: "+09:00")
-Sekki24.current_zassetsu(Date.new(2026, 3, 20), tz: "+09:00")
 ```
 
-`kou_year` returns three microseasons for each of the year's 24 solar terms.
-The last one can begin just after the Gregorian year boundary.
+The 14 observances include four doyo periods, Setsubun, both Higan periods,
+Hachijuhachiya, Nyubai, Hangesho, Nihyakutoka, Nihyakuhatsuka, and both
+Shanichi days. Doyo and Higan include their complete date ranges.
 
-Supplementary observances include the four doyo periods, Setsubun, both Higan
-periods, Hachijuhachiya, Nyubai, Hangesho, Nihyakutoka, Nihyakuhatsuka, and both
-Shanichi days. Doyo and Higan results include their complete date ranges.
+`kou_year` associates three microseasons with each solar term in the requested
+year. The final microseason can begin just after the Gregorian year boundary.
 
 ### New moons and lunisolar dates
 
@@ -114,21 +89,21 @@ Sekki24.lunisolar_year(2026, tz: "+09:00")
 Sekki24.gregorian(2026, 1, 1, tz: "+09:00") # => 2026-02-17
 ```
 
-Lunisolar months begin on the local civil date containing a new moon. When 13
-months occur between winter-solstice months, the first month without a
-principal solar term becomes a leap month. For the ambiguous 2033 case,
-Sekki24 prioritizes the winter-solstice month and uses the recommended leap
-eleventh month (`Sekki24::Lunisolar::Calendar::LEAP_MONTH_RULE`).
+## API
 
-Gregorian conversion is supported from 1900-01-01 through 2100-12-31. Lunar
-year 1899 is accepted only because its final months overlap the start of that
-range.
+| Calendar | Methods on `Sekki24` |
+| --- | --- |
+| Solar terms | `year`, `term`, `current`, `next_term`, `prev_term`, `on` |
+| Microseasons | `kou_year`, `kou`, `current_kou`, `next_kou`, `prev_kou` |
+| Observances | `zassetsu_year`, `zassetsu`, `zassetsu_on`, `current_zassetsu` |
+| New moons | `new_moons`, `new_moon_before`, `new_moon_after`, `moon_longitude` |
+| Lunisolar calendar | `lunisolar`, `lunisolar_year`, `gregorian` |
 
-The historical Tenpo calendar was abolished in 1873. This API is a modern
-astronomical reconstruction of its lunisolar rules, not an official Japanese
-civil calendar.
+`Term`, `Kou`, `Zassetsu`, `Lunisolar::Date`, and `Lunisolar::Month` are
+immutable value objects with `#to_h`. `Term`, `Kou`, and `Zassetsu` also
+implement `Comparable`.
 
-## Timezones and precision
+## Timezones
 
 `tz:` accepts:
 
@@ -140,27 +115,27 @@ civil calendar.
 Named-zone daylight-saving rules are used only when the caller supplies a
 timezone object.
 
-The default `:precise` mode targets agreement within one minute of the National
-Astronomical Observatory of Japan almanac. `:fast` trades accuracy for a
-lighter calculation:
+## Precision
 
 ```ruby
-Sekki24.year(2026, precision: :precise) # default
+Sekki24.year(2026, precision: :precise) # default, within one minute
 Sekki24.year(2026, precision: :fast)    # approximately within 20 minutes
 ```
 
-`precision:` applies to solar terms, microseasons, and supplementary
+`:precise` is validated against the National Astronomical Observatory of Japan
+almanac. `precision:` applies to solar terms, microseasons, and supplementary
 observances. New-moon and lunisolar APIs always use the precise lunar model.
-Results are memoized; call `Sekki24.clear_cache!` to clear all caches.
+
+Results are memoized. Use `Sekki24.clear_cache!` to clear all caches.
 
 ## Command line
 
-The executable prints text by default and can emit JSON:
+The executable prints text by default and supports JSON output:
 
 ```bash
 sekki24 2026 --tz +09:00
-sekki24 2026 --tz +09:00 --precision precise --format json
-sekki24 2026 --tz +09:00 --calendar kou --format json
+sekki24 2026 --tz +09:00 --format json
+sekki24 2026 --tz +09:00 --calendar kou
 sekki24 2026 --tz +09:00 --calendar zassetsu
 sekki24 2026 --tz +09:00 --calendar new-moons
 sekki24 2026 --tz +09:00 --calendar lunisolar
@@ -168,24 +143,37 @@ sekki24 2026 --tz +09:00 --calendar lunisolar
 
 Run `sekki24 --help` for every option.
 
+## Lunisolar calendar rules
+
+Lunisolar months begin on the local civil date containing a new moon. When 13
+months occur between winter-solstice months, the first month without a
+principal solar term becomes a leap month.
+
+For the ambiguous 2033 case, Sekki24 prioritizes the winter-solstice month and
+uses the recommended leap eleventh month. The selected rule is available as
+`Sekki24::Lunisolar::Calendar::LEAP_MONTH_RULE`.
+
+Gregorian conversion is supported from 1900-01-01 through 2100-12-31. Lunar
+year 1899 is accepted only because its final months overlap the start of that
+range.
+
+The historical Tenpo calendar was abolished in 1873. This API is a modern
+astronomical reconstruction of its lunisolar rules, not an official Japanese
+civil calendar.
+
 ## Accuracy and implementation
 
-- UTC is converted to Terrestrial Time with the Espenak–Meeus ΔT
-  polynomials. Future ΔT is necessarily an estimate.
-- Fast solar longitude follows Jean Meeus, *Astronomical Algorithms*, Chapter
-  25.
-- Precise solar longitude uses the principal terms from the IMCCE VSOP87D
-  Earth series, dominant IAU 1980 nutation terms, and aberration correction.
-- Solar-longitude crossings use Newton iteration with a bisection fallback.
-- Lunar longitude uses the principal Meeus periodic terms. New moons are
-  solved as apparent Sun–Moon longitude conjunctions.
+- UTC is converted to Terrestrial Time with the Espenak–Meeus ΔT polynomials.
+- Solar longitude uses the IMCCE VSOP87D Earth series in precise mode and the
+  Meeus Chapter 25 approximation in fast mode.
+- Lunar longitude uses the principal Meeus periodic terms.
+- Solar terms and new moons are solved numerically, with bisection fallbacks.
 
-Tests compare solar terms, supplementary observances, and every 2026 new moon
-against published National Astronomical Observatory of Japan values. They also
-cover all supported years, timezone boundaries, the 2014 leap ninth month, the
-2033 leap eleventh month, and Gregorian/lunisolar round trips.
-
-Sekki24 has no runtime gem dependencies.
+Coefficients are embedded in the gem; no ephemeris or calendar data is fetched
+at runtime. Tests compare published solar terms, supplementary observances, and
+every 2026 new moon against National Astronomical Observatory of Japan values.
+They also cover all supported years, timezone boundaries, leap-month cases,
+and Gregorian/lunisolar round trips.
 
 ## Development
 
@@ -194,8 +182,8 @@ bundle install
 bundle exec rake
 ```
 
-CI tests Ruby 3.0, 3.2, 3.3, 3.4, 4.0, and Ruby head. It also checks GitHub
-Actions workflows with actionlint and zizmor.
+CI tests Ruby 3.0, 3.2, 3.3, 3.4, 4.0, and Ruby head. actionlint and zizmor
+check the GitHub Actions workflows.
 
 ## License
 
