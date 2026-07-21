@@ -72,6 +72,7 @@ module Sekki24
         @candidate_cache.clear
       end
       SeventyTwoKou.clear_cache! if defined?(SeventyTwoKou)
+      ZassetsuCalendar.clear_cache! if defined?(ZassetsuCalendar)
       nil
     end
 
@@ -138,3 +139,4 @@ module Sekki24
 end
 
 require_relative "sekki24/seventy_two_kou"
+require_relative "sekki24/zassetsu_calendar"

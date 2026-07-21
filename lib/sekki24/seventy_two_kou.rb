@@ -12,7 +12,7 @@ module Sekki24
     class << self
       def year(year, tz:, precision:)
         calendar_year = validate_year(year)
-        mode = precision.to_sym
+        mode = normalize_precision(precision)
         solar = Solar.model(mode)
         cache_key = [calendar_year, TimeScale.timezone_key(tz), mode].freeze
         cached = @cache_mutex.synchronize { @year_cache[cache_key] }
@@ -20,8 +20,6 @@ module Sekki24
 
         calculated = calculate_year(calendar_year, tz, mode, solar)
         @cache_mutex.synchronize { @year_cache[cache_key] ||= calculated }
-      rescue NoMethodError
-        raise ArgumentError, "precision must be :fast or :precise"
       end
 
       def fetch(year, ordinal, tz:, precision:)
@@ -97,6 +95,12 @@ module Sekki24
         raise RangeError, "year must be between #{MIN_YEAR} and #{MAX_YEAR}"
       rescue ArgumentError, TypeError
         raise ArgumentError, "year must be an Integer between #{MIN_YEAR} and #{MAX_YEAR}"
+      end
+
+      def normalize_precision(precision)
+        precision.to_sym
+      rescue NoMethodError
+        raise ArgumentError, "precision must be :fast or :precise"
       end
     end
   end
