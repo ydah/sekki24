@@ -1,0 +1,66 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "date"
+require "json"
+require "optparse"
+require "sekki24"
+
+options = {
+  timezone: Sekki24::DEFAULT_TIMEZONE,
+  precision: Sekki24::DEFAULT_PRECISION,
+  format: "text"
+}
+
+parser = OptionParser.new do |command|
+  command.banner = "Usage: sekki24 [YEAR] [options]"
+  command.separator ""
+  command.separator "Calculate the 24 solar terms for a calendar year."
+  command.separator ""
+  command.on("--tz OFFSET", 'UTC offset such as "+09:00" (default: +00:00)') do |value|
+    options[:timezone] = value
+  end
+  command.on("--precision MODE", %w[precise fast], "precise or fast (default: precise)") do |value|
+    options[:precision] = value.to_sym
+  end
+  command.on("--format FORMAT", %w[text json], "text or json (default: text)") do |value|
+    options[:format] = value
+  end
+  command.on("-v", "--version", "Print the version") do
+    puts Sekki24::VERSION
+    exit
+  end
+  command.on("-h", "--help", "Print this help") do
+    puts command
+    exit
+  end
+end
+
+begin
+  parser.parse!
+  raise OptionParser::InvalidArgument, "too many arguments" if ARGV.length > 1
+
+  year = ARGV.empty? ? Date.today.year : Integer(ARGV.first, 10)
+  terms = Sekki24.year(year, tz: options[:timezone], precision: options[:precision])
+
+  if options[:format] == "json"
+    records = terms.map do |term|
+      term.to_h.merge(time: term.time.iso8601, date: term.to_date.iso8601)
+    end
+    puts JSON.pretty_generate(records)
+  else
+    terms.each do |term|
+      puts format(
+        "%s  %s (%s)  %3d°",
+        term.time.iso8601,
+        term.name_ja,
+        term.key,
+        term.longitude
+      )
+    end
+  end
+rescue OptionParser::ParseError, ArgumentError, RangeError => error
+  warn "sekki24: #{error.message}"
+  warn parser
+  exit 1
+end
